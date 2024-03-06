@@ -1,7 +1,4 @@
-﻿using Dapper;
-using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
-namespace Flashcards;
+﻿namespace Flashcards;
 
 public class Flashcards
 {
@@ -10,7 +7,6 @@ public class Flashcards
         var DataAccess = new DataAcess();
 
         DataAccess.CreateTables();
-        //SeedData.SeedRecords();
 
         UserInterface.MainMenu();
     }

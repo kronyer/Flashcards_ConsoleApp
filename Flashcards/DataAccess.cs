@@ -233,35 +233,7 @@ public class DataAcess
         }
     }
 
-    internal void BulkInsertRecords(List<Stack> stacks, List<Flashcard> flashcards)
-    {
-        SqlTransaction transaction = null;
 
-        try
-        {
-            using (var connection = new SqlConnection(ConnectionString))
-            {
-                connection.Open();
-
-                transaction = connection.BeginTransaction();
-
-                connection.Execute("INSERT INTO Stacks (Name) VALUES (@Name)", stacks, transaction: transaction);
-                connection.Execute("INSERT INTO Flashcards (Question, Answer, StackId) VALUES (@Question, @Answer, @StackId)", flashcards, transaction: transaction);
-
-                transaction.Commit();
-
-            }
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e.Message);
-
-            if (transaction != null)
-            {
-                transaction.Rollback();
-            }
-        }
-    }
 
     internal void UpdateFlashcard(int flashcardId, Dictionary<string, object> propertiesToUpdate)
     {
