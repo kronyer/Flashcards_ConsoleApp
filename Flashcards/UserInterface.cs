@@ -1,11 +1,6 @@
 ﻿using Flashcards.Models;
 using Microsoft.IdentityModel.Tokens;
 using Spectre.Console;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static Flashcards.Enums;
 
 namespace Flashcards
@@ -19,7 +14,6 @@ namespace Flashcards
             while (isRunning)
             {
                 var usersChoice = AnsiConsole.Prompt(new SelectionPrompt<MainMenuChoices>().Title("Pick your choice").AddChoices(MainMenuChoices.ManageStacks, MainMenuChoices.ManageFlashcards, MainMenuChoices.StudySession, MainMenuChoices.StudyHistory, MainMenuChoices.Quit));
-
 
                 switch (usersChoice)
                 {
@@ -68,10 +62,7 @@ namespace Flashcards
 
             while (isRunning)
             {
-
-
                 var usersChoice = AnsiConsole.Prompt(new SelectionPrompt<StackChoices>().Title("Chose an option").AddChoices(StackChoices.ViewStacks, StackChoices.AddStack, StackChoices.UpdateStack, StackChoices.DeleteStack, StackChoices.Return));
-
 
                 switch (usersChoice)
                 {
@@ -105,6 +96,7 @@ namespace Flashcards
             var stackId = stacks.Single(x => x.Name == option).Id;
             return stackId;
         }
+
         private static void ViewStacks()
         {
             Console.Clear();
@@ -121,7 +113,6 @@ namespace Flashcards
             table.Width = 20;
 
             AnsiConsole.Write(table);
-
         }
 
         private static void AddStack()
@@ -153,34 +144,46 @@ namespace Flashcards
 
         private static void DeleteStack()
         {
-            Console.Clear();
-            var id = ChooseStack("Chose stack to delete");
-
-            if (!AnsiConsole.Confirm("Are you sure?"))
-            {
-                Console.Clear();
-                return;
-            }
             var dataAccess = new DataAcess();
-            dataAccess.DeleteStack(id);
-            Console.Clear();
 
+            Console.Clear();
+            if (dataAccess.GetAllStacks().IsNullOrEmpty())
+            {
+                Console.WriteLine("Nothing to delete...");
+            }
+            else
+            {
+                var id = ChooseStack("Chose stack to delete");
+
+                if (!AnsiConsole.Confirm("Are you sure?"))
+                {
+                    Console.Clear();
+                    return;
+                }
+                dataAccess.DeleteStack(id);
+                Console.Clear();
+            }
         }
 
         private static void UpdateStack()
         {
-            Console.Clear();
-            var stack = new Stack();
-            stack.Id = ChooseStack("Chose one stack to edit");
-            stack.Name = AnsiConsole.Ask<string>("Insert Stack's new name");
-
             var dataAccess = new DataAcess();
-            dataAccess.UpdateStack(stack);
-            Console.Clear();
 
+            if (dataAccess.GetAllStacks().IsNullOrEmpty())
+            {
+                Console.WriteLine("Nothing to delete...");
+            }
+            else
+            {
+                Console.Clear();
+                var stack = new Stack();
+                stack.Id = ChooseStack("Chose one stack to edit");
+                stack.Name = AnsiConsole.Ask<string>("Insert Stack's new name");
 
+                dataAccess.UpdateStack(stack);
+                Console.Clear();
+            }
         }
-
 
         private static void FlashcardsMenu()
         {
@@ -189,7 +192,6 @@ namespace Flashcards
             while (isRunning)
             {
                 var usersChoice = AnsiConsole.Prompt(new SelectionPrompt<FlashcardChoices>().Title("Choose an option").AddChoices(FlashcardChoices.ViewFlashcards, FlashcardChoices.AddFlashcard, FlashcardChoices.UpdateFlashcard, FlashcardChoices.DeleteFlashcard, FlashcardChoices.Return));
-
 
                 switch (usersChoice)
                 {
@@ -260,24 +262,34 @@ namespace Flashcards
             var dataAccess = new DataAcess();
             dataAccess.UpdateFlashcard(flashcardId, propertiesToUpdate);
             Console.Clear();
-
-
         }
 
         static void DeleteFlashcard()
         {
-            Console.Clear();
-            var stackId = ChooseStack("Where is the flashcard you want to delete?");
-            var flashcard = ChooseFlashcard("Choose a flashcard to delete", stackId);
-
-            if (!AnsiConsole.Confirm("Are you sure?"))
-            {
-                return;
-            }
             var dataAccess = new DataAcess();
-            dataAccess.DeleteFlashcard(flashcard);
+
             Console.Clear();
 
+            var stackId = ChooseStack("Where is the flashcard you want to delete?");
+            if (dataAccess.GetFlashcards(stackId).IsNullOrEmpty())
+            {
+                Console.WriteLine("Nothing to delete...");
+                Console.ReadKey();
+                MainMenu();
+            }
+            else
+            {
+                var flashcard = ChooseFlashcard("Choose a flashcard to delete", stackId);
+
+                if (!AnsiConsole.Confirm("Are you sure?"))
+                {
+                    return;
+                }
+
+                dataAccess.DeleteFlashcard(flashcard);
+
+                Console.Clear();
+            }
         }
 
         static void AddFlashcard()
@@ -305,21 +317,18 @@ namespace Flashcards
             var flashcards = dataAccess.GetFlashcards(stackId);
             var stack = dataAccess.GetStackByID(stackId);
 
-
             var table = new Table();
 
             table.AddColumn($"{stack.Name}");
 
+            int i = 1;
             foreach (var flashcard in flashcards)
             {
-                table.AddRow($"{flashcard.Id} {flashcard.Question} {flashcard.Answer}");
-
+                table.AddRow($"{i} {flashcard.Question} {flashcard.Answer}");
+                i++;
             }
             AnsiConsole.Write(table);
-            //ids todos zoados
-            //usar dto??
         }
-
 
         private static string GetQuestion()
         {

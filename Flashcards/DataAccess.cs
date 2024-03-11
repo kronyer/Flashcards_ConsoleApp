@@ -31,9 +31,7 @@ public class DataAcess
                         PRIMARY KEY (Id)
                     );";
 
-
                 connection.Execute(createStackTableSql);
-
 
                 string createFlashcardTableSql =
                     @"IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Flashcards')
@@ -201,6 +199,7 @@ public class DataAcess
             using (var connection = new SqlConnection(ConnectionString))
             {
                 connection.Open();
+
                 string selectQuery = "SELECT * FROM flashcards WHERE StackId = @StackId";
 
                 var records = connection.Query<Flashcard>(selectQuery, new { StackId = stackId }).ToList();
@@ -232,8 +231,6 @@ public class DataAcess
             Console.WriteLine(e.Message);
         }
     }
-
-
 
     internal void UpdateFlashcard(int flashcardId, Dictionary<string, object> propertiesToUpdate)
     {
@@ -291,7 +288,14 @@ public class DataAcess
 
                 int rowsAffected = connection.Execute(deleteQuery, new { Id = id });
 
+                string resetQuery = @"
+                WITH CTE AS (
+                    SELECT Id, ROW_NUMBER() OVER (ORDER BY Id) AS NewId
+                    FROM flashcards
+                )
+                UPDATE CTE SET Id = NewId";
 
+                connection.Execute(resetQuery);
             }
         }
         catch (Exception ex)
@@ -316,7 +320,4 @@ public class DataAcess
             Console.WriteLine(ex.Message);
         }
     }
-
-
-
 }
